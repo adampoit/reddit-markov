@@ -30,11 +30,14 @@ function fetchComments() {
                   client.hincrby(keys.generate('wow', _.initial(ngrams[i])), _.last(ngrams[i]), 1);
                 }
               });
-
-              fetchComments();
             });
           }
         }
+        else {
+          console.log(error);
+        }
+
+        fetchComments();
       });
     });
   });
