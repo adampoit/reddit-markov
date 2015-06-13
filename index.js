@@ -65,6 +65,7 @@ function build(key, word) {
   nextWord(key, build);
 }
 
-var key = keys.generate('wow', [ '!start!', '!start!', '!start!' ]);
+var subreddit = process.argv[2]
+var key = keys.generate(subreddit, [ '!start!', '!start!', '!start!' ]);
 
 nextWord(key, build);
