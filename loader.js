@@ -12,63 +12,58 @@ var util = require('util'),
 
 var depth = 4;
 
-function fetchComments(subreddit, callback, fetchAll) {
-  limiter.removeTokens(1, function() {
+function fetchComments(subreddit, callback) {
+  limiter.removeTokens(1, function () {
     client.get(subreddit + ':last.comment.id', function (result, commentId) {
       var url = 'http://reddit.com/r/' + subreddit + '/comments.json';
-      if (!fetchAll)
-        url += '?before=' + commentId;
 
       request({
         url: url,
         json: true
-      }, callback);
+      }, function (error, response, body) {
+        if (!error && response.statusCode === 200) {
+          var comments = [];
+          for (var comment of body.data.children) {
+            if (comment.data.name == commentId)
+              break;
+
+            comments.push(comment);
+          }
+
+          callback(comments);
+        }
+        else {
+          console.log(response);
+          callback(null);
+        }
+      });
     });
   });
 }
 
-function processComments(subreddit) {
-  fetchComments(subreddit, function (error, response, body) {
-    if (!error && response.statusCode === 200) {
-      if (body.data.children.length > 0) {
-        var commentId = body.data.children[0].data.name;
-        console.log('Saving comments for ' + subreddit + ' up to ' + commentId);
-        client.set(subreddit + ':last.comment.id', commentId, function() {
-          _.each(body.data.children, function (comment) {
-            var ngrams = NGrams.ngrams(tokenizer.tokenize(comment.data.body), depth, '!start!', '!end!');
-            for (var i = 0; i < ngrams.length; i++) {
-              client.hincrby(keys.generate(subreddit, _.initial(ngrams[i])), _.last(ngrams[i]), 1);
-            }
-          });
-        });
+function processComments() {
+  var subreddit = subreddits.shift();
+  console.log('Loading ' + subreddit);
+
+  fetchComments(subreddit, function (comments) {
+    if (comments != null && comments.length != 0) {
+      for (var comment of comments) {
+        var ngrams = NGrams.ngrams(tokenizer.tokenize(comment.data.body), depth, '!start!', '!end!');
+        for (var set of ngrams) {
+          client.hincrby(keys.generate(subreddit, _.initial(set)), _.last(set), 1);
+        }
       }
-    }
-    else {
-      console.log(response);
+
+      console.log('Saved ' + comments.length + ' comments for ' + subreddit + ' up to ' + comments[0].data.name);
+
+      client.set(subreddit + ':last.comment.id', comments[0].data.name);
     }
 
-    processComments(subreddit);
-  }, false);
-}
-
-function setInitialCommentId(subreddit, callback) {
-  fetchComments(subreddit, function (error, response, body) {
-    if (!error && response.statusCode == 200) {
-      var commentId = body.data.children[0].data.name;
-      console.log('Set initial commentId to ' + commentId);
-      client.set(subreddit + ':last.comment.id', commentId, function() {
-        callback(subreddit);
-      });
-    }
-    else {
-      console.log(response);
-      setInitialCommentId(processComments);
-    }
-  }, true);
+    subreddits.push(subreddit);
+    processComments();
+  });
 }
 
 var subreddits = process.argv.slice(2);
 
-_.each(subreddits, function (subreddit) {
-  setInitialCommentId(subreddit, processComments);
-});
+processComments();
