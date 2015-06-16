@@ -8,7 +8,7 @@ module.exports.generate = function(prefix, tokens) {
 }
 
 module.exports.getNext = function(currentKey, word) {
-  var match = currentKey.match('([^:]*)' + keySeparator + '(.*)');
+  var match = currentKey.match('([^' + keySeparator + ']*)' + keySeparator + '(.*)');
   var prefix = match[1];
   var tokens = match[2].split(tokenSeparator);
 
