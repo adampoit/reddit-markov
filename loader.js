@@ -10,7 +10,7 @@ var util = require('util'),
   limiter = new RateLimiter(1, 3000),
   request = require('request');
 
-var depth = 4;
+var maxDepth = 4;
 
 function fetchComments(subreddit, callback) {
   limiter.removeTokens(1, function () {
@@ -40,18 +40,23 @@ function fetchComments(subreddit, callback) {
   });
 }
 
+function saveComments(subreddit, comments, depth) {
+  for (var comment of comments) {
+    var ngrams = NGrams.ngrams(tokenizer.tokenize(comment.data.body), depth, '!start!', '!end!');
+    for (var set of ngrams) {
+      client.hincrby(keys.generate(subreddit, _.initial(set)), _.last(set), 1);
+    }
+  }
+}
+
 function processComments() {
   var subreddit = subreddits.shift();
   console.log('Loading ' + subreddit);
 
   fetchComments(subreddit, function (comments) {
     if (comments.length != 0) {
-      for (var comment of comments) {
-        var ngrams = NGrams.ngrams(tokenizer.tokenize(comment.data.body), depth, '!start!', '!end!');
-        for (var set of ngrams) {
-          client.hincrby(keys.generate(subreddit, _.initial(set)), _.last(set), 1);
-        }
-      }
+      for (var depth of _.range(1, maxDepth + 1))
+        saveComments(subreddit, comments, depth);
 
       console.log('Saved ' + comments.length + ' comments for ' + subreddit + ' up to ' + comments[0].data.name);
 
