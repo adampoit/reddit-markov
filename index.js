@@ -4,11 +4,11 @@ var _ = require('underscore'),
   keys = require('./util/keys'),
   clipboard = require('copy-paste');
 
-var nextWord = function(key, callback) {
-  client.exists(key, function(err, data) {
+function nextWord(key, callback) {
+  client.exists(key, function (err, data) {
     if (data == null) { callback(null); }
     else {
-      client.hgetall(key, function(result, data) {
+      client.hgetall(key, function (result, data) {
         var sum = 0;
 
         for (var i in data)
@@ -27,7 +27,7 @@ var nextWord = function(key, callback) {
 
         var nextKey = keys.getNext(key, nextWord);
         if (nextWord == '!end!')
-          callback (null);
+          callback(null);
         else
           callback(nextKey, nextWord);
       });
@@ -65,7 +65,8 @@ function build(key, word) {
   nextWord(key, build);
 }
 
-var subreddit = process.argv[2]
-var key = keys.generate(subreddit, [ '!start!', '!start!', '!start!' ]);
+var subreddit = process.argv[2];
+var depth = process.argv[3];
+var key = keys.generate(subreddit, _.range(depth).map(function () { return '!start!' }));
 
 nextWord(key, build);

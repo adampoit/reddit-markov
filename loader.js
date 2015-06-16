@@ -55,7 +55,7 @@ function processComments() {
 
   fetchComments(subreddit, function (comments) {
     if (comments.length != 0) {
-      for (var depth of _.range(1, maxDepth + 1))
+      for (var depth of _.range(2, maxDepth + 1))
         saveComments(subreddit, comments, depth);
 
       console.log('Saved ' + comments.length + ' comments for ' + subreddit + ' up to ' + comments[0].data.name);
