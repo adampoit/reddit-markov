@@ -21,21 +21,20 @@ function fetchComments(subreddit, callback) {
         url: url,
         json: true
       }, function (error, response, body) {
+        var comments = [];
         if (!error && response.statusCode === 200) {
-          var comments = [];
           for (var comment of body.data.children) {
             if (comment.data.name == commentId)
               break;
 
             comments.push(comment);
           }
-
-          callback(comments);
         }
         else {
           console.log(response);
-          callback(null);
         }
+
+        callback(comments);
       });
     });
   });
@@ -46,7 +45,7 @@ function processComments() {
   console.log('Loading ' + subreddit);
 
   fetchComments(subreddit, function (comments) {
-    if (comments != null && comments.length != 0) {
+    if (comments.length != 0) {
       for (var comment of comments) {
         var ngrams = NGrams.ngrams(tokenizer.tokenize(comment.data.body), depth, '!start!', '!end!');
         for (var set of ngrams) {
