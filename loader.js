@@ -43,9 +43,8 @@ function fetchComments(subreddit, callback) {
 function saveComments(subreddit, comments, depth) {
   for (var comment of comments) {
     var ngrams = NGrams.ngrams(tokenizer.tokenize(comment.data.body), depth, '!start!', '!end!');
-    for (var set of ngrams) {
+    for (var set of ngrams)
       client.hincrby(keys.generate(subreddit, _.initial(set)), _.last(set), 1);
-    }
   }
 }
 
