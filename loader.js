@@ -1,7 +1,7 @@
 var util = require('util'),
   _ = require('underscore'),
   redis = require('redis'),
-  client = redis.createClient(32768, '192.168.99.100'),
+  client = redis.createClient('16379', 'ardb'),
   keys = require('./util/keys'),
   natural = require('natural'),
   tokenizer = new natural.TreebankWordTokenizer(),

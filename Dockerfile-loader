@@ -1,0 +1,8 @@
+FROM node:argon
+
+COPY package.json /app/
+WORKDIR /app
+RUN npm install
+COPY . /app
+
+ENTRYPOINT [ "node", "loader.js", "the_donald" ]
