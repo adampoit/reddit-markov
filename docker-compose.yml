@@ -11,9 +11,9 @@ services:
     links:
       - ardb
   ardb:
-    image: lupino/ardb-server
+    image: adampoit/ardb-server
     ports:
-      - "6379:16379"
+      - "6379:36380"
     volumes:
       - data:/var/lib/ardb
 volumes:
